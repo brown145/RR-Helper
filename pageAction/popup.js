@@ -34,7 +34,7 @@
 		}
 	};
 	
-	function send_selected () {
+	function send_selected (callback) {
 		var message = {};
 		message.event = 'set_params';
 		message.params = [];
@@ -50,13 +50,15 @@
 		
     	chrome.tabs.getSelected(null, function (tab) {
 	    	chrome.tabs.sendMessage(tab.id, message, function (response) { });
+	    	//Check for a callback function and whether it's a function
+	    	if(callback && typeof callback === 'function') {
+	    		callback();
+	    	}
 		});
 	}
 	
 	function window_close() {
-		setTimeout(function() {
-			window.close();
-		}, 200);
+		window.close();
 	}
 	
 	function update_selected (id, index) {
@@ -69,15 +71,13 @@
 				// update object to set current
 				update_selected(evt.target.id.replace('str_',''), 0);
 				// send message
-				send_selected();
-				window_close();
+				send_selected(window_close);
 			} else if ( evt.target.id.indexOf('rdo_') === 0 ) {
 				// update what is currently set
 				update_selected(evt.target.name, evt.target.value);
 			} else if ( evt.target.id === 'btn_reload' ) {
 				// send message with current object
-				send_selected();
-				window_close();
+				send_selected(window_close);
 			}
 		});
 	}
@@ -99,12 +99,11 @@
 	
 	function init( uri ) {
 		set_current( uri );
-		var x = 0;
 	
 		for(var id in querystring_options){
 			var current = querystring_options[id];
-			page_html += '<div id="' + id + '" ><strong id="str_' + id + x + '" >' + current.name + '</strong> - '+ current.description +'<div class="options">';
-			page_html += '<input type="radio" checked="checked" name="'+ id +'" id="rdo_default' + x + '" value="" ><label for="rdo_default' + x + '">default</label>';
+			page_html += '<div id="' + id + '" ><strong id="str_' + id + '" >' + current.name + '</strong> - '+ current.description +'<div class="options">';
+			page_html += '<input type="radio" checked="checked" name="'+ id +'" id="rdo_default_' + id + '" value="" ><label for="rdo_default_' + id + '">default</label>';
 			
 			for ( var i = 0; i < current.radio_options.length; i++ ) {
 				var opt = current.radio_options[i],
@@ -114,7 +113,6 @@
 			}
 			
 			page_html += '</div></div>';
-			x++;
 		}
 	
 		page_html += '<button id="btn_reload">reload</button>';
